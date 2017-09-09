@@ -8,6 +8,8 @@
 #include <iostream>
 #include <vector>
 #include <tuple>
+#include <map>
+
 
 
 namespace gdwg {
@@ -22,6 +24,16 @@ namespace gdwg {
         bool addNode(const N&);
         bool addEdge(const N&, const N&, const E&);
         bool replace(const N&, const N&);
+        void mergeReplace(const N&, const N&);
+        void deleteNode(const N&) noexcept;
+        void deleteEdge(const N&, const N&, const E&) noexcept;
+        void clear() noexcept;
+        bool isNode(const N&) const;
+        bool isConnected(const N&, const N&) const;
+        void printNodes() const;
+        void printEdges(const N&) const;
+
+        void print();
 
     private:
         //
@@ -101,11 +113,11 @@ namespace gdwg {
     // addEdge
     template <typename N, typename E>
     bool Graph<N, E>::addEdge(const N& src, const N& dst, const E& w) {
-        // throw runtime_error if src or dst is not in the graph
+        // throw runtime_error if source node or destination node is not in the graph
         if (std::find(node_list->begin(), node_list->end(), src) == node_list->end()) {
-            throw std::runtime_error("src is not in the graph");
+            throw std::runtime_error("Source node is not in the graph!");
         } else if (std::find(node_list->begin(), node_list->end(), dst) == node_list->end()) {
-            throw std::runtime_error("dst is not in the graph");
+            throw std::runtime_error("Destination node  is not in the graph!");
         } else {
             // create the the edge that will be added
             auto tp = std::make_tuple(src, dst, w);
@@ -127,7 +139,7 @@ namespace gdwg {
     bool Graph<N, E>::replace(const N& oldData, const N& newData) {
         // throw runtime_error if graph do not contain old data
         if (std::find(node_list->begin(), node_list->end(), oldData) == node_list->end()) {
-            throw std::runtime_error("no node that contains value oldData can be found");
+            throw std::runtime_error("No node that contains value oldData can be found!");
         } else {
             // return false if new data already in graph
             if (std::find(node_list->begin(), node_list->end(), newData) != node_list->end()) {
@@ -137,16 +149,160 @@ namespace gdwg {
                 // replace the old data with new data in node list
                 std::replace(node_list->begin(), node_list->end(), oldData, newData);
                 // replace the old data with new data in edge list
-                for (auto& edge : *edge_list) {
+                for (const auto& edge : *edge_list) {
                     if (std::get<0>(edge) == oldData) {
                         std::get<0>(edge) = newData;
-                    } else if (std::get<1>(edge) == oldData) {
+                    }
+                    if (std::get<1>(edge) == oldData) {
                         std::get<1>(edge) = newData;
                     }
                 }
                 std::cout << "replace node \"" << oldData << "\" with \"" << newData << "\" success" << std::endl;
                 return true;
             }
+        }
+    }
+
+    // merge replace
+    template <typename N, typename E>
+    void Graph<N, E>::mergeReplace(const N& oldData, const N& newData) {
+        if (std::find(node_list->begin(), node_list->end(), oldData) == node_list->end()) {
+            throw std::runtime_error("Old node is not in the graph!");
+        } else if (std::find(node_list->begin(), node_list->end(), newData) == node_list->end()) {
+            throw std::runtime_error("New node is not in the graph!");
+        } else {
+            // remove old node from node list
+            node_list->erase(std::find(node_list->begin(), node_list->end(), oldData));
+            // replace the old data with new data in edge list
+            for (const auto& edge: *edge_list) {
+                if (std::get<0>(edge) == oldData) {
+                    std::get<0>(edge) = newData;
+                }
+                if (std::get<1>(edge) == oldData) {
+                    std::get<1>(edge) = newData;
+                }
+            }
+            // sort the edge list and merge duplicated edges
+            std::sort(edge_list->begin(), edge_list->end());
+            edge_list->erase(std::unique(edge_list->begin(), edge_list->end()), edge_list->end());
+            std::cout << "merge replace node \"" << oldData << "\" with \"" << newData << "\" success" << std::endl;
+        }
+    }
+
+    // delete node
+    template <typename N, typename E>
+    void Graph<N, E>::deleteNode(const N& val) noexcept {
+        // check if node is in graph
+        if (std::find(node_list->begin(), node_list->end(), val) != node_list->end()) {
+            // remove node from node list
+            node_list->erase(std::find(node_list->begin(), node_list->end(), val));
+            // go through edge list, drop the edge that contains the deleted node
+            std::vector<std::tuple<N, N, E>> temp = std::vector<std::tuple<N, N, E>>();
+            while (!edge_list->empty()) {
+                if (std::get<0>(edge_list->back()) != val && std::get<1>(edge_list->back()) != val) {
+                    temp.push_back(edge_list->back());
+                }
+                edge_list->pop_back();
+            }
+            for (const auto& edge : temp) {
+                edge_list->push_back(edge);
+            }
+        }
+    }
+
+    // delete edge
+    template <typename N, typename E>
+    void Graph<N, E>::deleteEdge(const N& src, const N& dst, const E& w) noexcept {
+        auto tp = std::make_tuple(src, dst, w);
+        if (std::find(edge_list->begin(), edge_list->end(), tp) != edge_list->end())
+            edge_list->erase(std::find(edge_list->begin(), edge_list->end(), tp));
+    }
+
+    // clear
+    template <typename N, typename E>
+    void Graph<N, E>::clear() noexcept {
+        node_list->clear();
+        edge_list->clear();
+    }
+
+    template <typename N, typename E>
+    bool Graph<N, E>::isNode(const N& val) const {
+        if (std::find(node_list->begin(), node_list->end(), val) != node_list->end()) {
+            return true;
+        }
+        return false;
+    }
+
+    // is connected
+    template <typename N, typename E>
+    bool Graph<N, E>::isConnected(const N& src, const N& dst) const {
+        // throw runtime_error if source node or destination node is not in the graph
+        if (std::find(node_list->begin(), node_list->end(), src) == node_list->end()) {
+            throw std::runtime_error("Source node is not in the graph!");
+        } else if (std::find(node_list->begin(), node_list->end(), dst) == node_list->end()) {
+            throw std::runtime_error("Destination node  is not in the graph!");
+        } else {
+            // if any edge src → dst exists in graph, return true, otherwise return false
+            for (const auto& edge : *edge_list) {
+                if (std::get<0>(edge) == src && std::get<1>(edge) == dst) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    template <typename N, typename E>
+    void Graph<N, E>::printNodes() const {
+        std::map<N, int> m = std::map<N, int>();
+        for (const auto& edge : *edge_list) {
+            auto it = m.find(std::get<0>(edge));
+            if (it != m.end()) {
+                it->second += 1;
+            } else {
+                m.insert(std::make_pair(std::get<0>(edge), 1));
+            }
+        }
+        std::vector<std::tuple<int, N>> v = std::vector<std::tuple<int, N>>();
+        for (typename std::map<N, int>::iterator it = m.begin(); it != m.end(); ++it) {
+            v.push_back(std::make_tuple(it->second, it-> first));
+        }
+        std::sort(v.begin(), v.end());
+        for (const auto& i : v) {
+            std::cout << std::get<1>(i) << std::endl;
+        }
+    }
+
+    template <typename N, typename E>
+    void Graph<N, E>::printEdges(const N& val) const {
+        if (std::find(node_list->begin(), node_list->end(), val) == node_list->end()) {
+            throw std::runtime_error("Source node is not in graph!");
+        } else {
+            std::vector<std::tuple<N, E>> val_list = std::vector<std::tuple<N, E>>();
+            for (const auto &edge : *edge_list) {
+                if (std::get<0>(edge) == val) {
+                    val_list.push_back(std::make_tuple(std::get<1>(edge), std::get<2>(edge)));
+                }
+            }
+            std::cout << "Edges attached to Node " << val << std::endl;
+            if (val_list.empty()) {
+                std::cout << "(null)" << std::endl;
+            } else {
+                std::sort(val_list.begin(), val_list.end());
+                for (const auto& i : val_list) {
+                    std::cout << std::get<0>(i) << " " << std::get<1>(i) << std::endl;
+                }
+            }
+        }
+    }
+
+    template <typename N, typename E>
+    void Graph<N, E>::print() {
+        for (auto& node : *node_list) {
+            std::cout << node << std::endl;
+        }
+        for (auto& edge : *edge_list) {
+            std::cout << std::get<0>(edge) << " " << std::get<1>(edge) <<  " " << std::get<2>(edge) << std::endl;
         }
     }
 };
