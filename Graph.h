@@ -32,6 +32,10 @@ namespace gdwg {
         bool isConnected(const N&, const N&) const;
         void printNodes() const;
         void printEdges(const N&) const;
+        void begin() const;
+        bool end() const;
+        void next() const;
+        const N& value() const;
 
         void print();
 
@@ -42,13 +46,14 @@ namespace gdwg {
         //
         std::unique_ptr<std::vector<std::tuple<N, N, E>>> edge_list
                 = std::make_unique<std::vector<std::tuple<N, N, E>>>(std::vector<std::tuple<N, N, E>>());
+        mutable typename std::vector<N>::iterator my_it;
     };
 
     // Graph.tem
     // constructor
     template <typename N, typename E>
     Graph<N, E>::Graph() {
-        std::cout << "constructor" << std::endl;
+        //std::cout << "constructor" << std::endl;
     }
 
     // copy constructor
@@ -56,7 +61,7 @@ namespace gdwg {
     Graph<N, E>::Graph(const Graph<N, E>& graph) {
         *node_list = *graph.node_list;
         *edge_list = *graph.edge_list;
-        std::cout << "copy constructor" << std::endl;
+        //std::cout << "copy constructor" << std::endl;
     }
 
     // move constructor
@@ -66,13 +71,13 @@ namespace gdwg {
         *edge_list = std::move(*graph.edge_list);
         graph.node_list = nullptr;
         graph.edge_list = nullptr;
-        std::cout << "move constructor" << std::endl;
+        //std::cout << "move constructor" << std::endl;
     }
 
     // destructor
     template <typename N, typename E>
     Graph<N, E>::~Graph() {
-        std::cout << "destructor" << std::endl;
+        //std::cout << "destructor" << std::endl;
     }
 
     // copy assignment
@@ -80,7 +85,7 @@ namespace gdwg {
     Graph<N, E>& Graph<N, E>::operator=(const Graph& graph) {
         *node_list = *graph.node_list;
         *edge_list = *graph.edge_list;
-        std::cout << "copy assignment" << std::endl;
+        //std::cout << "copy assignment" << std::endl;
         return *this;
     }
 
@@ -91,7 +96,7 @@ namespace gdwg {
         *edge_list = std::move(*graph.edge_list);
         graph.node_list = nullptr;
         graph.edge_list = nullptr;
-        std::cout << "move assignment" << std::endl;
+        //std::cout << "move assignment" << std::endl;
         return *this;
     }
 
@@ -100,12 +105,12 @@ namespace gdwg {
     bool Graph<N, E>::addNode(const N& val) {
         // return false if node already in graph
         if (std::find(node_list->begin(), node_list->end(), val) != node_list->end()) {
-            std::cout << "add node \"" << val << "\" fail" << std::endl;
+            //std::cout << "add node \"" << val << "\" fail" << std::endl;
             return false;
         } else {
             // add node to graph
             node_list->push_back(val);
-            std::cout << "add node \"" << val << "\" success" << std::endl;
+            //std::cout << "add node \"" << val << "\" success" << std::endl;
             return true;
         }
     }
@@ -123,12 +128,12 @@ namespace gdwg {
             auto tp = std::make_tuple(src, dst, w);
             // return false if edge already in graph
             if (std::find(edge_list->begin(), edge_list->end(), tp) != edge_list->end()) {
-                std::cout << "add edge (" << src << ", " << dst << ", " << w << ") fail" << std::endl;
+                //std::cout << "add edge (" << src << ", " << dst << ", " << w << ") fail" << std::endl;
                 return false;
             } else {
                 // add edge to graph
                 edge_list->push_back(tp);
-                std::cout << "add edge (" << src << ", " << dst << ", " << w << ") success" << std::endl;
+                //std::cout << "add edge (" << src << ", " << dst << ", " << w << ") success" << std::endl;
                 return true;
             }
         }
@@ -143,13 +148,13 @@ namespace gdwg {
         } else {
             // return false if new data already in graph
             if (std::find(node_list->begin(), node_list->end(), newData) != node_list->end()) {
-                std::cout << "replace node \"" << oldData << "\" with \"" << newData << "\" fail" << std::endl;
+                //std::cout << "replace node \"" << oldData << "\" with \"" << newData << "\" fail" << std::endl;
                 return false;
             } else {
                 // replace the old data with new data in node list
                 std::replace(node_list->begin(), node_list->end(), oldData, newData);
                 // replace the old data with new data in edge list
-                for (const auto& edge : *edge_list) {
+                for (auto& edge : *edge_list) {
                     if (std::get<0>(edge) == oldData) {
                         std::get<0>(edge) = newData;
                     }
@@ -157,7 +162,7 @@ namespace gdwg {
                         std::get<1>(edge) = newData;
                     }
                 }
-                std::cout << "replace node \"" << oldData << "\" with \"" << newData << "\" success" << std::endl;
+                //std::cout << "replace node \"" << oldData << "\" with \"" << newData << "\" success" << std::endl;
                 return true;
             }
         }
@@ -174,7 +179,7 @@ namespace gdwg {
             // remove old node from node list
             node_list->erase(std::find(node_list->begin(), node_list->end(), oldData));
             // replace the old data with new data in edge list
-            for (const auto& edge: *edge_list) {
+            for (auto& edge: *edge_list) {
                 if (std::get<0>(edge) == oldData) {
                     std::get<0>(edge) = newData;
                 }
@@ -185,7 +190,7 @@ namespace gdwg {
             // sort the edge list and merge duplicated edges
             std::sort(edge_list->begin(), edge_list->end());
             edge_list->erase(std::unique(edge_list->begin(), edge_list->end()), edge_list->end());
-            std::cout << "merge replace node \"" << oldData << "\" with \"" << newData << "\" success" << std::endl;
+            //std::cout << "merge replace node \"" << oldData << "\" with \"" << newData << "\" success" << std::endl;
         }
     }
 
@@ -255,12 +260,13 @@ namespace gdwg {
     template <typename N, typename E>
     void Graph<N, E>::printNodes() const {
         std::map<N, int> m = std::map<N, int>();
+        for (const auto& node : *node_list) {
+            m.insert(std::make_pair(node, 0));
+        }
         for (const auto& edge : *edge_list) {
             auto it = m.find(std::get<0>(edge));
             if (it != m.end()) {
                 it->second += 1;
-            } else {
-                m.insert(std::make_pair(std::get<0>(edge), 1));
             }
         }
         std::vector<std::tuple<int, N>> v = std::vector<std::tuple<int, N>>();
@@ -278,10 +284,10 @@ namespace gdwg {
         if (std::find(node_list->begin(), node_list->end(), val) == node_list->end()) {
             throw std::runtime_error("Source node is not in graph!");
         } else {
-            std::vector<std::tuple<N, E>> val_list = std::vector<std::tuple<N, E>>();
+            std::vector<std::tuple<E, N>> val_list = std::vector<std::tuple<E, N>>();
             for (const auto &edge : *edge_list) {
                 if (std::get<0>(edge) == val) {
-                    val_list.push_back(std::make_tuple(std::get<1>(edge), std::get<2>(edge)));
+                    val_list.push_back(std::make_tuple(std::get<2>(edge), std::get<1>(edge)));
                 }
             }
             std::cout << "Edges attached to Node " << val << std::endl;
@@ -290,11 +296,33 @@ namespace gdwg {
             } else {
                 std::sort(val_list.begin(), val_list.end());
                 for (const auto& i : val_list) {
-                    std::cout << std::get<0>(i) << " " << std::get<1>(i) << std::endl;
+                    std::cout << std::get<1>(i) << " " << std::get<0>(i) << std::endl;
                 }
             }
         }
     }
+
+    template <typename N, typename E>
+    void Graph<N, E>::begin() const {
+        my_it = node_list->begin();
+    }
+
+    template <typename N, typename E>
+    bool Graph<N, E>::end() const {
+        return (my_it == node_list->end());
+    }
+
+    template <typename N, typename E>
+    void Graph<N, E>::next() const {
+        ++my_it;
+    }
+
+    template <typename N, typename E>
+    const N& Graph<N, E>::value() const {
+        return *my_it;
+    }
+
+
 
     template <typename N, typename E>
     void Graph<N, E>::print() {
