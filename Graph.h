@@ -21,7 +21,7 @@ namespace gdwg {
         //
         std::vector<std::shared_ptr<N>> node_list = std::vector<std::shared_ptr<N>>();
         //
-        std::vector<std::weak_ptr<std::tuple<N, N, E>>> edge_list = std::vector<std::weak_ptr<std::tuple<N, N, E>>>();
+       	std::vector<std::weak_ptr<std::tuple<N, N, E>>> edge_list;
         mutable typename std::vector<N>::iterator my_it;
     };
 
