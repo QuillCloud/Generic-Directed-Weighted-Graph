@@ -15,7 +15,10 @@
 namespace gdwg {
     template <typename N, typename E> class Graph {
     public:
+        Graph() {};
 
+        Graph(const Graph&);
+        Graph(Graph&&);
 
     private:
         struct Node {
@@ -28,8 +31,20 @@ namespace gdwg {
         };
         std::vector<Node> node_lsit;
     };
-// Graph.tem
-// constructor
+
+    template <typename N, typename E>
+    Graph<N, E>::Graph(const Graph& g) {
+        node_lsit = g.node_lsit;
+        std::cout << "copy construct" << std::endl;
+    }
+
+    template <typename N, typename E>
+    Graph<N, E>::Graph(Graph&& g) {
+        node_lsit = std::move(g.node_lsit);
+        std::cout << "move construct" << std::endl;
+    }
+
+
 
 };
 
