@@ -225,8 +225,7 @@ namespace gdwg {
     template <typename N, typename E>
     std::tuple<N, E> Graph<N, E>::Node::Dst::get_edge() const {
         auto ds = dst_name.lock();
-        if (ds != nullptr)
-            return std::make_tuple(*ds, edge);
+        return std::make_tuple(*ds, edge);
     }
 
     template <typename N, typename E>
