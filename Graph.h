@@ -10,6 +10,7 @@
 #include <tuple>
 #include <map>
 #include <memory>
+#include <algorithm>
 
 
 namespace gdwg {
