@@ -14,23 +14,22 @@
 
 namespace gdwg {
     template <typename N, typename E> class Graph {
-    public:public:
-        Graph();
+    public:
+
 
     private:
-        //
-        std::vector<std::shared_ptr<N>> node_list = std::vector<std::shared_ptr<N>>();
-        //
-       	std::vector<std::weak_ptr<std::tuple<N, N, E>>> edge_list;
-        mutable typename std::vector<N>::iterator my_it;
+        struct Node {
+            struct Dst {
+                E edge;
+                std::weak_ptr<N> dst_name;
+            };
+            std::shared_ptr<N> node_name;
+            std::vector<Dst> dst_list;
+        };
+        std::vector<Node> node_lsit;
     };
-
 // Graph.tem
 // constructor
-    template <typename N, typename E>
-    Graph<N, E>::Graph() {
-        std::cout << "constructor" << std::endl;
-    }
 
 };
 
