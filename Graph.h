@@ -16,9 +16,10 @@ namespace gdwg {
     template <typename N, typename E> class Graph {
     public:
         Graph() {};
-
         Graph(const Graph&);
         Graph(Graph&&);
+        Graph& operator=(const Graph&);
+        Graph& operator=(Graph&&);
 
     private:
         struct Node {
@@ -32,19 +33,35 @@ namespace gdwg {
         std::vector<Node> node_lsit;
     };
 
+    // copy constructor
     template <typename N, typename E>
     Graph<N, E>::Graph(const Graph& g) {
         node_lsit = g.node_lsit;
         std::cout << "copy construct" << std::endl;
     }
 
+    // move constructor
     template <typename N, typename E>
     Graph<N, E>::Graph(Graph&& g) {
         node_lsit = std::move(g.node_lsit);
         std::cout << "move construct" << std::endl;
     }
 
+    // copy assignment
+    template <typename N, typename E>
+    Graph<N, E>& Graph<N, E>::operator=(const Graph& g) {
+        node_lsit = g.node_lsit;
+        std::cout << "copy assignment" << std::endl;
+        return *this;
+    }
 
+    // move assignment
+    template <typename N, typename E>
+    Graph<N, E>& Graph<N, E>::operator=(Graph&& g) {
+        node_lsit = std::move(g.node_lsit);
+        std::cout << "move assignment" << std::endl;
+        return *this;
+    }
 
 };
 
