@@ -9,7 +9,7 @@
 #include <vector>
 #include <tuple>
 #include <map>
-
+#include <memory>
 
 
 namespace gdwg {
@@ -55,7 +55,7 @@ namespace gdwg {
     Graph<N, E>::Graph() {
         //std::cout << "constructor" << std::endl;
     }
-
+/*
 // copy constructor
     template <typename N, typename E>
     Graph<N, E>::Graph(const Graph<N, E>& graph) {
@@ -111,7 +111,7 @@ namespace gdwg {
             return true;
         }
     }
-/*
+
 // addEdge
     template <typename N, typename E>
     bool Graph<N, E>::addEdge(const N& src, const N& dst, const E& w) {
