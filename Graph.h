@@ -14,7 +14,7 @@
 
 namespace gdwg {
     template <typename N, typename E> class Graph {
-    public:
+    public:public:
         Graph();
         Graph(const Graph&);
         Graph(Graph&&);
@@ -23,6 +23,7 @@ namespace gdwg {
         Graph& operator=(Graph&&);
         bool addNode(const N&);
         bool addEdge(const N&, const N&, const E&);
+        /*
         bool replace(const N&, const N&);
         void mergeReplace(const N&, const N&);
         void deleteNode(const N&) noexcept;
@@ -38,90 +39,86 @@ namespace gdwg {
         const N& value() const;
 
         void print();
+         */
 
     private:
         //
-        std::unique_ptr<std::vector<N>> node_list
-                = std::make_unique<std::vector<N>>(std::vector<N>());
+        std::vector<std::shared_ptr<N>> node_list = std::vector<std::shared_ptr<N>>();
         //
-        std::unique_ptr<std::vector<std::tuple<N, N, E>>> edge_list
-                = std::make_unique<std::vector<std::tuple<N, N, E>>>(std::vector<std::tuple<N, N, E>>());
+        std::vector<std::weak_ptr<std::tuple<N, N, E>>> edge_list = std::vector<std::weak_ptr<std::tuple<N, N, E>>>();
         mutable typename std::vector<N>::iterator my_it;
     };
 
-    // Graph.tem
-    // constructor
+// Graph.tem
+// constructor
     template <typename N, typename E>
     Graph<N, E>::Graph() {
         //std::cout << "constructor" << std::endl;
     }
 
-    // copy constructor
+// copy constructor
     template <typename N, typename E>
     Graph<N, E>::Graph(const Graph<N, E>& graph) {
-        *node_list = *graph.node_list;
-        *edge_list = *graph.edge_list;
+        node_list = graph.node_list;
+        edge_list = graph.edge_list;
         //std::cout << "copy constructor" << std::endl;
     }
 
-    // move constructor
+// move constructor
     template <typename N, typename E>
     Graph<N, E>::Graph(Graph<N, E>&& graph) {
-        *node_list = std::move(*graph.node_list);
-        *edge_list = std::move(*graph.edge_list);
-        graph.node_list = nullptr;
-        graph.edge_list = nullptr;
+        node_list = std::move(graph.node_list);
+        edge_list = std::move(graph.edge_list);
         //std::cout << "move constructor" << std::endl;
     }
 
-    // destructor
+// destructor
     template <typename N, typename E>
     Graph<N, E>::~Graph() {
         //std::cout << "destructor" << std::endl;
     }
 
-    // copy assignment
+// copy assignment
     template <typename N, typename E>
     Graph<N, E>& Graph<N, E>::operator=(const Graph& graph) {
-        *node_list = *graph.node_list;
-        *edge_list = *graph.edge_list;
+        node_list = graph.node_list;
+        edge_list = graph.edge_list;
         //std::cout << "copy assignment" << std::endl;
         return *this;
     }
 
-    // move assignment
+// move assignment
     template <typename N, typename E>
     Graph<N, E>& Graph<N, E>::operator=(Graph&& graph) {
-        *node_list = std::move(*graph.node_list);
-        *edge_list = std::move(*graph.edge_list);
-        graph.node_list = nullptr;
-        graph.edge_list = nullptr;
+        node_list = std::move(graph.node_list);
+        edge_list = std::move(graph.edge_list);
         //std::cout << "move assignment" << std::endl;
         return *this;
     }
 
-    // addNode
+// addNode
     template <typename N, typename E>
     bool Graph<N, E>::addNode(const N& val) {
         // return false if node already in graph
-        if (std::find(node_list->begin(), node_list->end(), val) != node_list->end()) {
+        std::shared_ptr<N> val_ptr = std::make_shared<N>(val);
+        if (std::find(node_list.begin(), node_list.end(), val_ptr) != node_list.end()) {
             //std::cout << "add node \"" << val << "\" fail" << std::endl;
             return false;
         } else {
             // add node to graph
-            node_list->push_back(val);
+            node_list.push_back(val_ptr);
             //std::cout << "add node \"" << val << "\" success" << std::endl;
             return true;
         }
     }
-
-    // addEdge
+/*
+// addEdge
     template <typename N, typename E>
     bool Graph<N, E>::addEdge(const N& src, const N& dst, const E& w) {
         // throw runtime_error if source node or destination node is not in the graph
-        if (std::find(node_list->begin(), node_list->end(), src) == node_list->end()) {
+        if (std::find(node_list.begin(), node_list.end(), std::make_shared<N>(src)) == node_list.end()) {
             throw std::runtime_error("Source node is not in the graph!");
-        } else if (std::find(node_list->begin(), node_list->end(), dst) == node_list->end()) {
+        } else if (std::find(node_list.begin(), node_list->end(), dst) == node_list->end()) {
             throw std::runtime_error("Destination node  is not in the graph!");
         } else {
             // create the the edge that will be added
@@ -138,8 +135,8 @@ namespace gdwg {
             }
         }
     }
-
-    // replace
+/*
+// replace
     template <typename N, typename E>
     bool Graph<N, E>::replace(const N& oldData, const N& newData) {
         // throw runtime_error if graph do not contain old data
@@ -168,7 +165,7 @@ namespace gdwg {
         }
     }
 
-    // merge replace
+// merge replace
     template <typename N, typename E>
     void Graph<N, E>::mergeReplace(const N& oldData, const N& newData) {
         if (std::find(node_list->begin(), node_list->end(), oldData) == node_list->end()) {
@@ -194,7 +191,7 @@ namespace gdwg {
         }
     }
 
-    // delete node
+// delete node
     template <typename N, typename E>
     void Graph<N, E>::deleteNode(const N& val) noexcept {
         // check if node is in graph
@@ -215,7 +212,7 @@ namespace gdwg {
         }
     }
 
-    // delete edge
+// delete edge
     template <typename N, typename E>
     void Graph<N, E>::deleteEdge(const N& src, const N& dst, const E& w) noexcept {
         auto tp = std::make_tuple(src, dst, w);
@@ -223,7 +220,7 @@ namespace gdwg {
             edge_list->erase(std::find(edge_list->begin(), edge_list->end(), tp));
     }
 
-    // clear
+// clear
     template <typename N, typename E>
     void Graph<N, E>::clear() noexcept {
         node_list->clear();
@@ -238,7 +235,7 @@ namespace gdwg {
         return false;
     }
 
-    // is connected
+// is connected
     template <typename N, typename E>
     bool Graph<N, E>::isConnected(const N& src, const N& dst) const {
         // throw runtime_error if source node or destination node is not in the graph
@@ -333,6 +330,7 @@ namespace gdwg {
             std::cout << std::get<0>(edge) << " " << std::get<1>(edge) <<  " " << std::get<2>(edge) << std::endl;
         }
     }
+    */
 };
 
 #endif //GENERIC_DIRECTED_WEIGHTED_GRAPH_GRAPH_H
