@@ -74,7 +74,14 @@ namespace gdwg {
     // copy constructor
     template <typename N, typename E>
     Graph<N, E>::Graph(const Graph& g) {
-        std::vector<Node> node_list(g.node_list);
+        for (const Node& i : g.node_list) {
+            addNode(i.get_node_name());
+        }
+        for (const Node& i : g.node_list) {
+            for (std::tuple<E, N>& j : i.get_edge_list()) {
+                addEdge(i.get_node_name(), std::get<1>(j), std::get<0>(j));
+            }
+        }
         //std::cout << "copy construct" << std::endl;
     }
 
@@ -88,8 +95,16 @@ namespace gdwg {
     // copy assignment
     template <typename N, typename E>
     Graph<N, E>& Graph<N, E>::operator=(const Graph& g) {
-        std::vector<Node> node_list(g.node_list);
-        std::cout << "copy assignment" << std::endl;
+        node_list.clear();
+        for (auto& i : g.node_list) {
+            addNode(i.get_node_name());
+        }
+        for (auto& i : g.node_list) {
+            for (std::tuple<E, N>& j : i.get_edge_list()) {
+                addEdge(i.get_node_name(), std::get<1>(j), std::get<0>(j));
+            }
+        }
+        //std::cout << "copy assignment" << std::endl;
         return *this;
     }
 
@@ -97,13 +112,13 @@ namespace gdwg {
     template <typename N, typename E>
     Graph<N, E>& Graph<N, E>::operator=(Graph&& g) {
         node_list = std::move(g.node_list);
-        //std::cout << "move assignment" << std::endl;
+        std::cout << "move assignment" << std::endl;
         return *this;
     }
 
     template <typename N, typename E>
     bool Graph<N, E>::addNode(const N& val) {
-        for (const auto& i : node_list) {
+        for (auto& i : node_list) {
             if (i.get_node_name() == val) {
                 //std::cout << "add Node \"" << val << "\" fail" << std::endl;
                 return false;
