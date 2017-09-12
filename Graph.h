@@ -41,7 +41,7 @@ namespace gdwg {
         class Node {
         public:
             Node(const N& val) : node_name{std::make_shared<N>(val)} {}
-            N& get_node_name() const { return *node_name; }
+            const N& get_node_name() const { return *node_name; }
             std::shared_ptr<N> get_ptr() const { return node_name; }
             bool edge_in_node(const std::tuple<E, N>&) const;
             bool dst_in_node(const N&) const;
@@ -68,27 +68,28 @@ namespace gdwg {
             std::vector<Dst> dst_list;
         };
         std::vector<Node> node_list;
+        mutable typename std::vector<Node>::const_iterator my_it;
     };
 
     // copy constructor
     template <typename N, typename E>
     Graph<N, E>::Graph(const Graph& g) {
         node_list = g.node_list;
-        std::cout << "copy construct" << std::endl;
+        //std::cout << "copy construct" << std::endl;
     }
 
     // move constructor
     template <typename N, typename E>
     Graph<N, E>::Graph(Graph&& g) {
         node_list = std::move(g.node_list);
-        std::cout << "move construct" << std::endl;
+        //std::cout << "move construct" << std::endl;
     }
 
     // copy assignment
     template <typename N, typename E>
     Graph<N, E>& Graph<N, E>::operator=(const Graph& g) {
         node_list = g.node_list;
-        std::cout << "copy assignment" << std::endl;
+        //std::cout << "copy assignment" << std::endl;
         return *this;
     }
 
@@ -96,7 +97,7 @@ namespace gdwg {
     template <typename N, typename E>
     Graph<N, E>& Graph<N, E>::operator=(Graph&& g) {
         node_list = std::move(g.node_list);
-        std::cout << "move assignment" << std::endl;
+        //std::cout << "move assignment" << std::endl;
         return *this;
     }
 
@@ -104,13 +105,13 @@ namespace gdwg {
     bool Graph<N, E>::addNode(const N& val) {
         for (const auto& i : node_list) {
             if (i.get_node_name() == val) {
-                std::cout << "add Node \"" << val << "\" fail" << std::endl;
+                //std::cout << "add Node \"" << val << "\" fail" << std::endl;
                 return false;
             }
         }
         Node newNode(val);
         node_list.push_back(newNode);
-        std::cout << "add Node \"" << val << "\" success" << std::endl;
+        //std::cout << "add Node \"" << val << "\" success" << std::endl;
         return true;
     }
 
@@ -127,11 +128,11 @@ namespace gdwg {
         }
         auto src_edge = std::make_tuple(w, dst);
         if (srcNode->edge_in_node(src_edge)) {
-            std::cout << "add Edge (" << src << ", " << dst <<  ", " << w << ") fail" << std::endl;
+            //std::cout << "add Edge (" << src << ", " << dst <<  ", " << w << ") fail" << std::endl;
             return false;
         }
         srcNode->addDst(*dstNode, w);
-        std::cout << "add Edge (" << src << ", " << dst <<  ", " << w << ") success" << std::endl;
+        //std::cout << "add Edge (" << src << ", " << dst <<  ", " << w << ") success" << std::endl;
         return true;
     }
 
@@ -147,11 +148,11 @@ namespace gdwg {
             return newData == nd.get_node_name();
         });
         if (newNode != node_list.end()) {
-            std::cout << "replace Node \"" << oldData << "\" to \"" << newData << "\" fail" << std::endl;
+            //std::cout << "replace Node \"" << oldData << "\" to \"" << newData << "\" fail" << std::endl;
             return false;
         }
         oldNode->replace(newData);
-        std::cout << "replace Node \"" << oldData << "\" to \"" << newData << "\" success" << std::endl;
+        //std::cout << "replace Node \"" << oldData << "\" to \"" << newData << "\" success" << std::endl;
         return true;
     }
 
@@ -262,6 +263,26 @@ namespace gdwg {
                 std::cout << std::get<1>(i) << " " << std::get<0>(i) << std::endl;
             }
         }
+    }
+
+    template <typename N, typename E>
+    void Graph<N, E>::begin() const {
+        my_it = node_list.begin();
+    }
+
+    template <typename N, typename E>
+    bool Graph<N, E>::end() const {
+        return (my_it == node_list.end());
+    }
+
+    template <typename N, typename E>
+    void Graph<N, E>::next() const {
+        ++my_it;
+    }
+
+    template <typename N, typename E>
+    const N& Graph<N, E>::value() const {
+        return(my_it->get_node_name());
     }
 
     template <typename N, typename E>
