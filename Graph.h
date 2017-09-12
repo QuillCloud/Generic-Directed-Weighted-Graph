@@ -256,7 +256,7 @@ namespace gdwg {
         auto edge_list = srcNode->get_edge_list();
         std::cout << "Edges attached to Node " << srcNode->get_node_name() << std::endl;
         if (edge_list.empty()) {
-            std::cout << "null" << std::endl;
+            std::cout << "(null)" << std::endl;
         } else {
             std::sort(edge_list.begin(), edge_list.end());
             for (auto& i : edge_list) {
