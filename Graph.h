@@ -47,7 +47,7 @@ namespace gdwg {
             bool dst_in_node(const N&) const;
             void addDst(const Node&, const E&);
             void replace(const N&);
-            std::vector<std::tuple<N, E>> get_edge_list() const;
+            std::vector<std::tuple<E, N>> get_edge_list() const;
             void delete_invalid_edges();
             unsigned get_outdgree() const;
             void merge_dst(const Node&, const N&);
@@ -317,8 +317,8 @@ namespace gdwg {
     }
 
     template <typename N, typename E>
-    std::vector<std::tuple<N, E>> Graph<N, E>::Node::get_edge_list() const {
-        std::vector<std::tuple<N, E>> temp;
+    std::vector<std::tuple<E, N>> Graph<N, E>::Node::get_edge_list() const {
+        std::vector<std::tuple<E, N>> temp;
         for (auto& i : dst_list) {
             temp.push_back(i.get_edge());
         }
