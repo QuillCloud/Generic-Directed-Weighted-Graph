@@ -44,12 +44,14 @@ namespace gdwg {
             N& get_node_name() const { return *node_name; }
             std::shared_ptr<N> get_ptr() const { return node_name; }
             bool edge_in_node(const std::tuple<E, N>&) const;
+            bool dst_in_node(const N&) const;
             void addDst(const Node&, const E&);
             void replace(const N&);
             std::vector<std::tuple<N, E>> get_edge_list() const;
             void delete_invalid_edges();
             unsigned get_outdgree() const;
             void merge_dst(const Node&, const N&);
+            void delete_edge(const std::tuple<E, N>&);
 
         private:
             class Dst {
@@ -188,6 +190,49 @@ namespace gdwg {
     }
 
     template <typename N, typename E>
+    void Graph<N, E>::deleteEdge(const N& src, const N& dst, const E& w) noexcept {
+        auto srcNode = std::find_if(node_list.begin(), node_list.end(), [&src] (const Node& nd) {
+            return src == nd.get_node_name();
+        });
+        auto dstNode = std::find_if(node_list.begin(), node_list.end(), [&dst] (const Node& nd) {
+            return dst == nd.get_node_name();
+        });
+        if (srcNode != node_list.end() && dstNode != node_list.end()) {
+            srcNode->delete_edge(std::make_tuple(w, dst));
+        }
+    }
+
+    template <typename N, typename E>
+    void Graph<N, E>::clear() noexcept {
+        node_list.clear();
+    }
+
+    template <typename N, typename E>
+    bool Graph<N, E>::isNode(const N& val) const {
+        auto argNode = std::find_if(node_list.begin(), node_list.end(), [&val] (const Node& nd) {
+            return val == nd.get_node_name();
+        });
+        if (argNode != node_list.end()) {
+            return true;
+        }
+        return false;
+    }
+
+    template <typename N, typename E>
+    bool Graph<N, E>::isConnected(const N& src, const N& dst) const {
+        auto srcNode = std::find_if(node_list.begin(), node_list.end(), [&src] (const Node& nd) {
+            return src == nd.get_node_name();
+        });
+        auto dstNode = std::find_if(node_list.begin(), node_list.end(), [&dst] (const Node& nd) {
+            return dst == nd.get_node_name();
+        });
+        if (srcNode == node_list.end() || dstNode == node_list.end()) {
+            throw std::runtime_error("Either Source node or destination node is not in the graph!");
+        }
+        return (srcNode->dst_in_node(dst));
+    }
+
+    template <typename N, typename E>
     void Graph<N, E>::printNodes() const {
         std::vector<std::tuple<unsigned , N>> temp;
         for (auto& i : node_list) { 
@@ -217,9 +262,7 @@ namespace gdwg {
                 std::cout << std::get<1>(i) << " " << std::get<0>(i) << std::endl;
             }
         }
-
     }
-
 
     template <typename N, typename E>
     void Graph<N, E>::Node::addDst(const Node& nd, const E& eg)  {
@@ -232,6 +275,17 @@ namespace gdwg {
         for (auto& i : dst_list) {
             if (i.get_edge() == tp)
                 return true;
+        }
+        return false;
+    }
+
+    template <typename N, typename E>
+    bool Graph<N, E>::Node::dst_in_node(const N& val) const {
+        auto argDst = std::find_if(dst_list.begin(), dst_list.end(), [&val] (const Dst& ds) {
+            return val == std::get<1>(ds.get_edge());
+        });
+        if (argDst != dst_list.end()) {
+            return true;
         }
         return false;
     }
@@ -277,6 +331,16 @@ namespace gdwg {
     }
 
     template <typename N, typename E>
+    void Graph<N, E>::Node::delete_edge(const std::tuple<E, N>& eg) {
+        auto deleteEdge= std::find_if(dst_list.begin(), dst_list.end(), [&eg] (const Dst& ds) {
+            return eg == ds.get_edge();
+        });
+        if (deleteEdge != dst_list.end()) {
+            dst_list.erase(deleteEdge);
+        }
+    }
+
+    template <typename N, typename E>
     std::tuple<E, N> Graph<N, E>::Node::Dst::get_edge() const {
         auto ds = dst_name.lock();
         return std::make_tuple(edge, *ds);
@@ -286,9 +350,6 @@ namespace gdwg {
     bool Graph<N, E>::Node::Dst::is_valid() const {
         return (dst_name.lock() == nullptr);
     }
-
-
-
 };
 
 #endif //GENERIC_DIRECTED_WEIGHTED_GRAPH_GRAPH_H
