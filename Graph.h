@@ -41,20 +41,23 @@ namespace gdwg {
         class Node {
         public:
             Node(const N& val) : node_name{std::make_shared<N>(val)} {}
-            const N& get_node() const { return *node_name; }
-            std::weak_ptr<N> get_ptr() const { return node_name; }
-            bool edge_in_node(const std::tuple<N, E>&) const;
+            N& get_node_name() const { return *node_name; }
+            std::shared_ptr<N> get_ptr() const { return node_name; }
+            bool edge_in_node(const std::tuple<E, N>&) const;
             void addDst(const Node&, const E&);
             void replace(const N&);
             std::vector<std::tuple<N, E>> get_edge_list() const;
-            void clean_up_edges();
+            void delete_invalid_edges();
+            unsigned get_outdgree() const;
+            void merge_dst(const Node&, const N&);
 
         private:
             class Dst {
             public:
                 Dst(const Node& nd, const E& eg) : edge{eg} { dst_name = nd.get_ptr(); }
-                std::tuple<N, E> get_edge() const;
-                bool is_nullptr() const;
+                std::tuple<E, N> get_edge() const;
+                bool is_valid() const;
+                void change_dst(const Node& nd) { dst_name = nd.get_ptr(); }
             private:
                 std::weak_ptr<N> dst_name;
                 E edge;
@@ -98,7 +101,7 @@ namespace gdwg {
     template <typename N, typename E>
     bool Graph<N, E>::addNode(const N& val) {
         for (const auto& i : node_list) {
-            if (i.get_node() == val) {
+            if (i.get_node_name() == val) {
                 std::cout << "add Node \"" << val << "\" fail" << std::endl;
                 return false;
             }
@@ -112,15 +115,15 @@ namespace gdwg {
     template <typename N, typename E>
     bool Graph<N, E>::addEdge(const N& src, const N& dst, const E& w) {
         auto srcNode= std::find_if(node_list.begin(), node_list.end(), [&src] (const Node& nd) {
-            return src == nd.get_node();
+            return src == nd.get_node_name();
         });
         auto dstNode = std::find_if(node_list.begin(), node_list.end(), [&dst] (const Node& nd) {
-            return dst == nd.get_node();
+            return dst == nd.get_node_name();
         });
         if (srcNode == node_list.end() || dstNode == node_list.end()) {
             throw std::runtime_error("Source node or destination node not in the graph!");
         }
-        auto src_edge = std::make_tuple(dst, w);
+        auto src_edge = std::make_tuple(w, dst);
         if (srcNode->edge_in_node(src_edge)) {
             std::cout << "add Edge (" << src << ", " << dst <<  ", " << w << ") fail" << std::endl;
             return false;
@@ -133,13 +136,13 @@ namespace gdwg {
     template <typename N, typename E>
     bool Graph<N, E>::replace(const N& oldData, const N& newData) {
         auto oldNode = std::find_if(node_list.begin(), node_list.end(), [&oldData] (const Node& nd) {
-            return oldData == nd.get_node();
+            return oldData == nd.get_node_name();
         });
         if (oldNode == node_list.end()) {
             throw std::runtime_error("No node that contains value oldData can be found!");
         }
         auto newNode = std::find_if(node_list.begin(), node_list.end(), [&newData] (const Node& nd) {
-            return newData == nd.get_node();
+            return newData == nd.get_node_name();
         });
         if (newNode != node_list.end()) {
             std::cout << "replace Node \"" << oldData << "\" to \"" << newData << "\" fail" << std::endl;
@@ -153,17 +156,20 @@ namespace gdwg {
     template <typename N, typename E>
     void Graph<N, E>::mergeReplace(const N& oldData, const N& newData) {
         auto oldNode = std::find_if(node_list.begin(), node_list.end(), [&oldData] (const Node& nd) {
-            return oldData == nd.get_node();
+            return oldData == nd.get_node_name();
         });
         auto newNode = std::find_if(node_list.begin(), node_list.end(), [&newData] (const Node& nd) {
-            return newData == nd.get_node();
+            return newData == nd.get_node_name();
         });
         if (oldNode == node_list.end() || newNode == node_list.end()) {
             throw std::runtime_error("Either node cannot be found in the graph!");
         }
         auto egl = oldNode->get_edge_list();
         for (auto& i : egl) {
-            addEdge(newData, std::get<0>(i), std::get<1>(i));
+            addEdge(newData, std::get<1>(i), std::get<0>(i));
+        }
+        for (auto& i : node_list) {
+            i.merge_dst(*newNode, oldNode->get_node_name());
         }
         node_list.erase(oldNode);
     }
@@ -171,25 +177,58 @@ namespace gdwg {
     template <typename N, typename E>
     void Graph<N, E>::deleteNode(const N& deleteData) noexcept {
         auto deleteNode = std::find_if(node_list.begin(), node_list.end(), [&deleteData] (const Node& nd) {
-            return deleteData == nd.get_node();
+            return deleteData == nd.get_node_name();
         });
         if (deleteNode != node_list.end()) {
             node_list.erase(deleteNode);
             for (auto& i : node_list) {
-                i.clean_up_edges();
+                i.delete_invalid_edges();
             }
         }
     }
 
     template <typename N, typename E>
-    void Graph<N, E>::Node::addDst(const Node &nd, const E &eg)  {
-        std::cout << dst_list.size() << std::endl;
+    void Graph<N, E>::printNodes() const {
+        std::vector<std::tuple<unsigned , N>> temp;
+        for (auto& i : node_list) { 
+            temp.push_back(std::make_tuple(i.get_outdgree(), i.get_node_name()));
+        }
+        std::sort(temp.begin(), temp.end());
+        for (auto& i : temp) {
+            std::cout << std::get<1>(i) << std::endl;
+        }
+    }
+
+    template <typename N, typename E>
+    void Graph<N, E>::printEdges(const N& val) const {
+        auto srcNode = std::find_if(node_list.begin(), node_list.end(), [&val] (const Node& nd) {
+            return val == nd.get_node_name();
+        });
+        if (srcNode == node_list.end()) {
+            throw std::runtime_error("Source Node does not exist in the graph!");
+        }
+        auto edge_list = srcNode->get_edge_list();
+        std::cout << "Edges attached to Node " << srcNode->get_node_name() << std::endl;
+        if (edge_list.empty()) {
+            std::cout << "null" << std::endl;
+        } else {
+            std::sort(edge_list.begin(), edge_list.end());
+            for (auto& i : edge_list) {
+                std::cout << std::get<1>(i) << " " << std::get<0>(i) << std::endl;
+            }
+        }
+
+    }
+
+
+    template <typename N, typename E>
+    void Graph<N, E>::Node::addDst(const Node& nd, const E& eg)  {
         Dst d(nd, eg);
         dst_list.push_back(d);
     }
 
     template <typename N, typename E>
-    bool Graph<N, E>::Node::edge_in_node(const std::tuple<N, E>& tp) const {
+    bool Graph<N, E>::Node::edge_in_node(const std::tuple<E, N>& tp) const {
         for (auto& i : dst_list) {
             if (i.get_edge() == tp)
                 return true;
@@ -204,7 +243,7 @@ namespace gdwg {
 
     template <typename N, typename E>
     std::vector<std::tuple<N, E>> Graph<N, E>::Node::get_edge_list() const {
-        auto temp = std::vector<std::tuple<N, E>> ();
+        std::vector<std::tuple<N, E>> temp;
         for (auto& i : dst_list) {
             temp.push_back(i.get_edge());
         }
@@ -212,10 +251,10 @@ namespace gdwg {
     }
 
     template <typename N, typename E>
-    void Graph<N, E>::Node::clean_up_edges() {
+    void Graph<N, E>::Node::delete_invalid_edges() {
         decltype(dst_list) temp;
         for (auto& i : dst_list) {
-            if (!i.is_nullptr()) {
+            if (!i.is_valid()) {
                 temp.push_back(i);
             }
         }
@@ -223,15 +262,31 @@ namespace gdwg {
     }
 
     template <typename N, typename E>
-    std::tuple<N, E> Graph<N, E>::Node::Dst::get_edge() const {
-        auto ds = dst_name.lock();
-        return std::make_tuple(*ds, edge);
+    unsigned Graph<N, E>::Node::get_outdgree() const {
+        return static_cast<unsigned >(dst_list.size());
     }
 
     template <typename N, typename E>
-    bool Graph<N, E>::Node::Dst::is_nullptr() const {
+    void Graph<N, E>::Node::merge_dst(const Node& nd, const N& val) {
+        for (auto& i : dst_list) {
+            auto edge_tuple = i.get_edge();
+            if (std::get<1>(edge_tuple) == val) {
+                i.change_dst(nd);
+            }
+        }
+    }
+
+    template <typename N, typename E>
+    std::tuple<E, N> Graph<N, E>::Node::Dst::get_edge() const {
+        auto ds = dst_name.lock();
+        return std::make_tuple(edge, *ds);
+    }
+
+    template <typename N, typename E>
+    bool Graph<N, E>::Node::Dst::is_valid() const {
         return (dst_name.lock() == nullptr);
     }
+
 
 
 };

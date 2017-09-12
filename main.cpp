@@ -13,11 +13,11 @@ int main() {
         a.addNode(3);
         a.addEdge(1, 2, 12);
         a.addEdge(2, 3, 23);
-        a.addEdge(1, 3, 23);
+        a.addEdge(3, 1, 23);
         a.addEdge(1, 2, 22);
-        a.deleteNode(2);
-        a.addNode(2);
-        a.addEdge(1, 2, 12);
+        a.mergeReplace(2, 1);
+        a.printEdges(1);
+
     } catch (std::runtime_error e) {
         std::cout << e.what() << std::endl;
     }
