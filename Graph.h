@@ -74,7 +74,7 @@ namespace gdwg {
     // copy constructor
     template <typename N, typename E>
     Graph<N, E>::Graph(const Graph& g) {
-        node_list = g.node_list;
+        std::vector<Node> node_list(g.node_list);
         //std::cout << "copy construct" << std::endl;
     }
 
@@ -88,8 +88,8 @@ namespace gdwg {
     // copy assignment
     template <typename N, typename E>
     Graph<N, E>& Graph<N, E>::operator=(const Graph& g) {
-        node_list = g.node_list;
-        //std::cout << "copy assignment" << std::endl;
+        std::vector<Node> node_list(g.node_list);
+        std::cout << "copy assignment" << std::endl;
         return *this;
     }
 
