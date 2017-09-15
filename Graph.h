@@ -78,7 +78,9 @@ namespace gdwg {
         std::vector<Node> node_list;
         mutable typename std::vector<Node>::const_iterator my_it;
     };
+
     #include "Graph.tem"
+
 };
 
 #endif //GENERIC_DIRECTED_WEIGHTED_GRAPH_GRAPH_H
