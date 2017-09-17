@@ -80,7 +80,7 @@ bool Graph<N, E>::addEdge(const N& src, const N& dst, const E& w) {
         return false;
     }
     // add edge to graph
-    srcNode->addEdge(*dstNode, w);
+    srcNode->add_edge(*dstNode, w);
     return true;
 }
 
@@ -134,7 +134,7 @@ void Graph<N, E>::mergeReplace(const N& oldData, const N& newData) {
         i.merge_edge(*newNode, oldNode->get_node_name());
     }
     // delete the oldData node
-    node_list.erase(oldNode);
+    deleteNode(oldData);
 }
 
 // deletes a given node and all its associated incoming and outgoing edges
@@ -316,8 +316,8 @@ bool Graph<N, E>::Node::dst_in_node(const N& val) const {
 
 // add edge in class Node
 template <typename N, typename E>
-void Graph<N, E>::Node::addEdge(const Node& nd, const E& eg)  {
-    // create a Edge and add tu edge list
+void Graph<N, E>::Node::add_edge(const Node& nd, const E& eg)  {
+    // create a Edge and add to edge list
     Edge d(nd, eg);
     edge_list.push_back(d);
 }
@@ -364,12 +364,21 @@ unsigned Graph<N, E>::Node::get_outdgree() const {
 // change edge in Node, let the destination node weak pointer point to a new Node
 template <typename N, typename E>
 void Graph<N, E>::Node::merge_edge(const Node& nd, const N& val) {
+    // get this Node's edge list
+    auto check_dup = this->get_edge_list();;
     // find the edge that contain the given destination node name
     for (auto& i : edge_list) {
         auto edge_tuple = i.get_edge();
         if (std::get<1>(edge_tuple) == val) {
-            // let the destination node weak pointer point to given Node
-            i.change_dst(nd);
+            // change to new edge tuple, and check if it already in edge list
+            std::get<1>(edge_tuple) = nd.get_node_name();
+            auto find_dup = std::find_if(check_dup.begin(), check_dup.end(), [&edge_tuple] (auto& edges) {
+                return edge_tuple == edges;
+            });
+            if (find_dup == check_dup.end()) {
+                // let the destination node weak pointer point to given Node
+                i.change_dst(nd);
+            }
         }
     }
 }

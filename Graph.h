@@ -45,7 +45,7 @@ namespace gdwg {
             std::shared_ptr<N> get_ptr() const;
             bool edge_in_node(const std::tuple<E, N>&) const;
             bool dst_in_node(const N&) const;
-            void addEdge(const Node&, const E&);
+            void add_edge(const Node&, const E&);
             void replace(const N&);
             std::vector<std::tuple<E, N>> get_edge_list() const;
             void delete_invalid_edges();
