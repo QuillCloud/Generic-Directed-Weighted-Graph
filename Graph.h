@@ -66,16 +66,17 @@ namespace gdwg {
             private:
                 // weak_ptr<N> point to shared_ptr<N> 'node_name', store the destination node name
                 std::weak_ptr<N> dst_name;
-                // store the edge weight
+                // store the edge weight of this edge
                 E weight;
             };
             // store the node's name
             std::shared_ptr<N> node_name;
-            // store the edges
+            // store the edges of this Node
             std::vector<Edge> edge_list;
         };
-        //
+        //vector for storing the Node
         std::vector<Node> node_list;
+        // iterator for providing a fake iterator for enumerating all the node values in a graph
         mutable typename std::vector<Node>::const_iterator my_it;
     };
 
