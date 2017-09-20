@@ -1,4 +1,4 @@
-// test 9: tests copy assignment
+// test 9: tests move assignment
 
 #include "Graph.h"
 
@@ -24,16 +24,17 @@ int main() {
 	std::cout << "Graph before copy assignment" << std::endl;
 	gHeapCopy.printNodes();
 	
-	gHeapCopy = *gHeap;	// copy assignment
-	gHeap->deleteNode("a");
-	std::cout << "original graph after delete" << std::endl;
+	gHeapCopy = std::move(*gHeap);	// move assignment
+
+	// We shouldn't use a moved-from object, in general.
+	// However, here, for testing purposes, we assumed
+	// a moved-from graph is an empty graph.
+	std::cout << "moved-from graph (expected to be empty)" << std::endl;
 	gHeap->printNodes();
-	gHeap->printEdges("b");
-	std::cout << "copied graph after delete in other graph" << std::endl;
+	delete gHeap;
+
+	std::cout << "moved-to graph" << std::endl;
 	gHeapCopy.printNodes();
 	gHeapCopy.printEdges("b");
 	
-	delete gHeap;
-	std::cout << "copied graph after other graph is deleted" << std::endl;
-	gHeapCopy.printNodes();
 }
