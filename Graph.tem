@@ -56,15 +56,13 @@ Graph<N, E>& Graph<N, E>::operator=(Graph&& g) {
 template <typename N, typename E>
 bool Graph<N, E>::addNode(const N& val) {
     // check if node already in graph
-    for (const auto& i : node_list) {
-        if (i.get_node_name() == val) {
-            return false;
-        }
+    if (!isNode(val)) {
+        // create a new node with value and add it to graph
+        Node newNode(val);
+        node_list.push_back(newNode);
+        return true;
     }
-    // create a new node with value and add it to graph
-    Node newNode(val);
-    node_list.push_back(newNode);
-    return true;
+    return false;
 }
 
 // add a new edge
@@ -104,12 +102,8 @@ bool Graph<N, E>::replace(const N& oldData, const N& newData) {
     if (oldNode == node_list.end()) {
         throw std::runtime_error("No node that contains value oldData can be found!");
     }
-    // find newData node in graph
-    auto newNode = std::find_if(node_list.begin(), node_list.end(), [&newData] (const Node& nd) {
-        return newData == nd.get_node_name();
-    });
     // if newData node already in graph, return false
-    if (newNode != node_list.end()) {
+    if (isNode(newData)) {
         return false;
     }
     // replace the old data by new data
@@ -170,11 +164,8 @@ void Graph<N, E>::deleteEdge(const N& src, const N& dst, const E& w) noexcept {
     auto srcNode = std::find_if(node_list.begin(), node_list.end(), [&src] (const Node& nd) {
         return src == nd.get_node_name();
     });
-    // find destination node in graph
-    auto dstNode = std::find_if(node_list.begin(), node_list.end(), [&dst] (const Node& nd) {
-        return dst == nd.get_node_name();
-    });
-    if (srcNode != node_list.end() && dstNode != node_list.end()) {
+    // check if source node and destination node both in graph
+    if (srcNode != node_list.end() && isNode(dst)) {
         // delete the edge in graph
         srcNode->delete_edge(std::make_tuple(w, dst));
     }
@@ -207,12 +198,8 @@ bool Graph<N, E>::isConnected(const N& src, const N& dst) const {
     auto srcNode = std::find_if(node_list.begin(), node_list.end(), [&src] (const Node& nd) {
         return src == nd.get_node_name();
     });
-    // find destination node in graph
-    auto dstNode = std::find_if(node_list.begin(), node_list.end(), [&dst] (const Node& nd) {
-        return dst == nd.get_node_name();
-    });
-    // if either node not in graph, throw error
-    if (srcNode == node_list.end() || dstNode == node_list.end()) {
+    // if either source node or destination node not in graph, throw error
+    if (srcNode == node_list.end() || !isNode(dst)) {
         throw std::runtime_error("Either Source node or destination node is not in the graph!");
     }
     // check if source node contain the destination node
@@ -374,9 +361,9 @@ unsigned Graph<N, E>::Node::get_outdgree() const {
 template <typename N, typename E>
 void Graph<N, E>::Node::merge_edge(const Node& nd, const N& val) {
     // get this Node's edge list
-    auto check_dup = this->get_edge_list();;
+    auto check_dup = get_edge_list();
     // find the edge that contain the given destination node name
-    for (auto& i : edge_list) {
+    std::for_each(edge_list.begin(), edge_list.end(), [&nd, &val, &check_dup] (auto& i) {
         auto edge_tuple = i.get_edge();
         if (std::get<1>(edge_tuple) == val) {
             // change to new edge tuple, and check if it already in edge list
@@ -389,7 +376,7 @@ void Graph<N, E>::Node::merge_edge(const Node& nd, const N& val) {
                 i.change_dst(nd);
             }
         }
-    }
+    });
 }
 
 // delete the edge in Node
