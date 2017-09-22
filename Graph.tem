@@ -136,7 +136,7 @@ void Graph<N, E>::mergeReplace(const N& oldData, const N& newData) {
     // get the oldData node's edges list and add all edges to newData node
     auto egl = oldNode->get_edge_list();
     std::for_each(egl.begin(), egl.end(), [this, &newData] (const auto& i) {
-        addEdge(newData, std::get<1>(i), std::get<0>(i));
+        this->addEdge(newData, std::get<1>(i), std::get<0>(i));
     });
     // for each node in graph, let newData node replace the oldData node for every edges
     std::for_each(node_list.begin(), node_list.end(), [&oldNode, &newNode] (auto& i) {
