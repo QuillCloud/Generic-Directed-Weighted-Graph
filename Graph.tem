@@ -22,25 +22,29 @@ Graph<N, E>::Graph(Graph&& g) {
 // copy assignment
 template <typename N, typename E>
 Graph<N, E>& Graph<N, E>::operator=(const Graph& g) {
-    // clear the graph and add copy target nodes in graph
-    node_list.clear();
-    for (auto& i : g.node_list) {
-        addNode(i.get_node_name());
-    }
-    // add copy target edges in graph
-    for (auto& i : g.node_list) {
-        for (std::tuple<E, N>& j : i.get_edge_list()) {
-            addEdge(i.get_node_name(), std::get<1>(j), std::get<0>(j));
+    if (this != &g) {
+        // clear the graph and add copy target nodes in graph
+        node_list.clear();
+        for (auto &i : g.node_list) {
+            addNode(i.get_node_name());
         }
+        // add copy target edges in graph
+        for (auto &i : g.node_list) {
+            for (std::tuple <E, N> &j : i.get_edge_list()) {
+                addEdge(i.get_node_name(), std::get<1>(j), std::get<0>(j));
+            }
+        }
+        return *this;
     }
-    return *this;
 }
 
 // move assignment
 template <typename N, typename E>
 Graph<N, E>& Graph<N, E>::operator=(Graph&& g) {
-    node_list = std::move(g.node_list);
-    return *this;
+    if (this != &g) {
+        node_list = std::move(g.node_list);
+        return *this;
+    }
 }
 
 // add a new node with value val to the graph
