@@ -17,6 +17,7 @@ Graph<N, E>::Graph(const Graph& g) {
 template <typename N, typename E>
 Graph<N, E>::Graph(Graph&& g) {
     node_list = std::move(g.node_list);
+    g.node_list.clear();
 }
 
 // copy assignment
@@ -34,8 +35,8 @@ Graph<N, E>& Graph<N, E>::operator=(const Graph& g) {
                 addEdge(i.get_node_name(), std::get<1>(j), std::get<0>(j));
             }
         }
-        return *this;
     }
+    return *this;
 }
 
 // move assignment
@@ -43,8 +44,9 @@ template <typename N, typename E>
 Graph<N, E>& Graph<N, E>::operator=(Graph&& g) {
     if (this != &g) {
         node_list = std::move(g.node_list);
-        return *this;
+        g.node_list.clear();
     }
+    return *this;
 }
 
 // add a new node with value val to the graph
