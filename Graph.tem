@@ -3,13 +3,13 @@ template <typename N, typename E>
 Graph<N, E>::Graph(const Graph& g) {
     // add copy target nodes in new graph
     std::for_each(g.node_list.begin(), g.node_list.end(), [this] (const auto& i) {
-        addNode(i.get_node_name());
+        this->addNode(i.get_node_name());
     });
     // add copy target edges in new graph
     std::for_each(g.node_list.begin(), g.node_list.end(), [this] (const auto& i) {
         auto i_edge_list = i.get_edge_list();
         std::for_each(i_edge_list.begin(), i_edge_list.end(), [this, &i] (const auto& j) {
-            addEdge(i.get_node_name(), std::get<1>(j), std::get<0>(j));
+            this->addEdge(i.get_node_name(), std::get<1>(j), std::get<0>(j));
         });
     });
 }
@@ -29,13 +29,13 @@ Graph<N, E>& Graph<N, E>::operator=(const Graph& g) {
         node_list.clear();
         // add copy target nodes in this graph
         std::for_each(g.node_list.begin(), g.node_list.end(), [this] (const auto& i) {
-            addNode(i.get_node_name());
+            this->addNode(i.get_node_name());
         });
         // add copy target edges in this graph
         std::for_each(g.node_list.begin(), g.node_list.end(), [this] (const auto& i) {
             auto i_edge_list = i.get_edge_list();
             std::for_each(i_edge_list.begin(), i_edge_list.end(), [this, &i] (const auto& j) {
-                addEdge(i.get_node_name(), std::get<1>(j), std::get<0>(j));
+                this->addEdge(i.get_node_name(), std::get<1>(j), std::get<0>(j));
             });
         });
     }
