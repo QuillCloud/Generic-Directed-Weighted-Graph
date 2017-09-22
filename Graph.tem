@@ -1,69 +1,3 @@
-// copy constructor
-template <typename N, typename E>
-Graph<N, E>::Graph(const Graph& g) {
-    // add copy target nodes in new graph
-    for (const Node& i : g.node_list) {
-        addNode(i.get_node_name());
-    }
-    // add copy target edges in new graph
-    for (const Node& i : g.node_list) {
-        for (std::tuple<E, N> &j : i.get_edge_list()) {
-            addEdge(i.get_node_name(), std::get<1>(j), std::get<0>(j));
-        }
-    }
-}
-
-// move constructor
-template <typename N, typename E>
-Graph<N, E>::Graph(Graph&& g) {
-    node_list = std::move(g.node_list);
-    g.node_list.clear();
-}
-
-// copy assignment
-template <typename N, typename E>
-Graph<N, E>& Graph<N, E>::operator=(const Graph& g) {
-    if (this != &g) {
-        // clear the graph and add copy target nodes in graph
-        node_list.clear();
-        for (auto &i : g.node_list) {
-            addNode(i.get_node_name());
-        }
-        // add copy target edges in graph
-        for (auto &i : g.node_list) {
-            for (std::tuple <E, N> &j : i.get_edge_list()) {
-                addEdge(i.get_node_name(), std::get<1>(j), std::get<0>(j));
-            }
-        }
-    }
-    return *this;
-}
-
-// move assignment
-template <typename N, typename E>
-Graph<N, E>& Graph<N, E>::operator=(Graph&& g) {
-    if (this != &g) {
-        node_list = std::move(g.node_list);
-        g.node_list.clear();
-    }
-    return *this;
-}
-
-// add a new node with value val to the graph
-template <typename N, typename E>
-bool Graph<N, E>::addNode(const N& val) {
-    // check if node already in graph
-    for (auto& i : node_list) {
-        if (i.get_node_name() == val) {
-            return false;
-        }
-    }
-    // create a new node with value and add it to graph
-    Node newNode(val);
-    node_list.push_back(newNode);
-    return true;
-}
-
 // add a new edge
 template <typename N, typename E>
 bool Graph<N, E>::addEdge(const N& src, const N& dst, const E& w) {
@@ -132,13 +66,13 @@ void Graph<N, E>::mergeReplace(const N& oldData, const N& newData) {
     }
     // get the oldData node's edges list and add all edges to newData node
     auto egl = oldNode->get_edge_list();
-    for (auto& i : egl) {
+    std::for_each(egl.begin(), egl.end(), [this, &newData] (const auto& i) {
         addEdge(newData, std::get<1>(i), std::get<0>(i));
-    }
+    });
     // for each node in graph, let newData node replace the oldData node for every edges
-    for (auto& i : node_list) {
+    std::for_each(node_list.begin(), node_list.end(), [&oldNode, &newNode] (auto& i) {
         i.merge_edge(*newNode, oldNode->get_node_name());
-    }
+    });
     // delete the oldData node
     deleteNode(oldData);
 }
@@ -154,9 +88,9 @@ void Graph<N, E>::deleteNode(const N& deleteData) noexcept {
         // delete node in graph
         node_list.erase(deleteNode);
         // for each node, delete the edges which destination node's weak pointer is expired
-        for (auto& i : node_list) {
+        std::for_each(node_list.begin(), node_list.end(), [] (auto& i) {
             i.delete_invalid_edges();
-        }
+        });
     }
 }
 
@@ -222,14 +156,14 @@ void Graph<N, E>::printNodes() const {
     // create a vector to contain the tuple (outdgree, node name)
     std::vector<std::tuple<unsigned , N>> temp;
     // for each node, get outdgree and name to make a tuple and add the tuple to vector
-    for (auto& i : node_list) {
+    std::for_each(node_list.begin(), node_list.end(), [&temp] (const auto& i) {
         temp.push_back(std::make_tuple(i.get_outdgree(), i.get_node_name()));
-    }
+    });
     // sort the vector, then go through vector and print each node's name
     std::sort(temp.begin(), temp.end());
-    for (auto& i : temp) {
+    std::for_each(temp.begin(), temp.end(), [] (const auto& i) {
         std::cout << std::get<1>(i) << std::endl;
-    }
+    });
 }
 
 // prints the outgoing edges of a given node, SrcNode, containing value val.
@@ -253,9 +187,9 @@ void Graph<N, E>::printEdges(const N& val) const {
         // the element(edge) in list is tuple (weight, destination node name)
         std::sort(edge_list.begin(), edge_list.end());
         // print each edges in node
-        for (auto& i : edge_list) {
+        std::for_each(edge_list.begin(), edge_list.end(), [] (const auto& i) {
             std::cout << std::get<1>(i) << " " << std::get<0>(i) << std::endl;
-        }
+        });
     }
 }
 
@@ -340,9 +274,9 @@ std::vector<std::tuple<E, N>> Graph<N, E>::Node::get_edge_list() const {
     // create a vector that store edge
     std::vector<std::tuple<E, N>> temp;
     // add each edge to vector and return the vector
-    for (auto& i : edge_list) {
+    std::for_each(edge_list.begin(), edge_list.end(), [&temp] (const auto& i) {
         temp.push_back(i.get_edge());
-    }
+    });
     return temp;
 }
 
@@ -352,11 +286,11 @@ void Graph<N, E>::Node::delete_invalid_edges() {
     // create a new vector
     decltype(edge_list) temp;
     // add edges to new vector except the edge that destination node's weak pointer is expired
-    for (auto& i : edge_list) {
+    std::for_each(edge_list.begin(), edge_list.end(), [&temp] (const auto& i) {
         if (!i.is_valid()) {
             temp.push_back(i);
         }
-    }
+    });
     // move new vector to edge list vector
     edge_list = std::move(temp);
 }
